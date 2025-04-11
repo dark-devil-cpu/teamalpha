@@ -1,5 +1,5 @@
 import streamlit as st
-import fitz  # PyMuPDF
+import pdfplumber   # PyMuPDF
 
 # === Expanded Roles and Skills ===
 skill_map = {
