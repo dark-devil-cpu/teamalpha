@@ -1,5 +1,5 @@
 import streamlit as st
-import pdfplumber  # You can use either pdfplumber or PyMuPDF (fitz)
+import pdfplumber
 
 # === Expanded Roles and Skills ===
 skill_map = {
@@ -40,19 +40,22 @@ learning_suggestions = {
     "TensorFlow": "🧠 [TensorFlow Tutorials](https://www.tensorflow.org/learn)",
     "Git": "🔧 [Git Handbook](https://guides.github.com/introduction/git-handbook/)",
     "MongoDB": "🛢️ [MongoDB University](https://university.mongodb.com/)",
-    "Docker": "🐳 [Docker Essentials – Codecademy](https://www.codecademy.com/learn/learn-docker)",
-    "Kubernetes": "📦 [Kubernetes – KodeKloud](https://kodekloud.com/courses/kubernetes-for-beginners/)",
+    "Docker": "🐳 [Docker Essentials - Codecademy](https://www.codecademy.com/learn/learn-docker)",
+    "Kubernetes": "📦 [Kubernetes - KodeKloud](https://kodekloud.com/courses/kubernetes-for-beginners/)",
     "AWS": "☁️ [AWS Cloud Practitioner](https://explore.skillbuilder.aws/learn/course/134/aws-cloud-practitioner-essentials)",
-    "Figma": "🎨 [Figma Tutorial – freeCodeCamp](https://www.youtube.com/watch?v=jwCmIBJ8Jtc)",
+    "Figma": "🎨 [Figma Tutorial - freeCodeCamp](https://www.youtube.com/watch?v=jwCmIBJ8Jtc)",
     "Cybersecurity": "🛡️ [Cisco: Intro to Cybersecurity](https://skillsforall.com/course/introduction-to-cybersecurity)",
 }
 
 # === Extract Text from PDF ===
 def extract_text_from_pdf(uploaded_file):
-    with pdfplumber.open(uploaded_file) as pdf:
-        text = ""
-        for page in pdf.pages:
-            text += page.extract_text()
+    text = ""
+    try:
+        with pdfplumber.open(uploaded_file) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+    except Exception as e:
+        st.error(f"Error reading PDF: {e}")
     return text
 
 # === Skill Analysis ===
@@ -79,9 +82,10 @@ resume_text = ""
 
 if input_method == "Upload PDF":
     uploaded_file = st.file_uploader("Upload your resume (PDF only)", type=["pdf"])
-    if uploaded_file:
+    if uploaded_file is not None:
         resume_text = extract_text_from_pdf(uploaded_file)
-        st.success("✅ Resume uploaded and extracted.")
+        if resume_text:
+            st.success("✅ Resume uploaded and extracted.")
 elif input_method == "Paste Text":
     resume_text = st.text_area("Paste your resume content here:", height=300)
 
@@ -110,6 +114,7 @@ if st.button("🔍 Analyze Resume"):
         st.subheader("📚 Learning Recommendations")
         if course_recommendations:
             for rec in course_recommendations:
-                st.markdown(f"- {rec}")
+                if rec:  # Check if recommendation exists
+                    st.markdown(f"- {rec}")
         else:
             st.write("🎉 You're already skilled enough. Keep it up!")
