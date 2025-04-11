@@ -1,15 +1,20 @@
 import streamlit as st
-import pdfplumber
+import pdfplumber  # More accurate than PyPDF2
 import docx
+import io
 import re
 import json
-from io import BytesIO
+from pathlib import Path
 from typing import Dict, List, Tuple
 
-# ========== SUPERCHARGED SKILLS DATABASE ==========
+# ========== CONFIGURATION ==========
 @st.cache_data
-def load_skills_db():
-    return {
+def load_config():
+    """Load skills configuration from JSON file"""
+    config_path = Path("skills_config.json")
+    if not config_path.exists():
+        # Default configuration if file doesn't exist
+        return {
         "role_skills": {
             "Data Analyst": {
                 "Python": ["python", "py", "pandas", "numpy"],
@@ -156,9 +161,9 @@ def load_skills_db():
                 "Mobile Games": ["mobile", "ios", "android"],
                 "Game Design": ["gdd", "mechanics"]
             }
-        },
-        "learning_resources": {
-            "Python": "https://www.learnpython.org/",
+            },
+            "learning_resources": {
+                "Python": "https://www.learnpython.org/",
             "SQL": "https://www.w3schools.com/sql/",
             "Excel": "https://excel-practice-online.com/",
             "Power BI": "https://learn.microsoft.com/en-us/training/powerplatform/power-bi/",
@@ -249,12 +254,14 @@ def load_skills_db():
             "VR/AR": "https://learn.unity.com/course/vr-development",
             "Mobile Games": "https://www.udemy.com/course/unitymobilegame/",
             "Game Design": "https://www.coursera.org/learn/game-design"
+            }
         }
-    }
+    with open(config_path) as f:
+        return json.load(f)
 
-SKILLS_DB = load_skills_db()
-ROLE_SKILLS = SKILLS_DB["role_skills"]
-LEARNING_RESOURCES = SKILLS_DB["learning_resources"]
+CONFIG = load_config()
+ROLE_SKILLS = CONFIG["role_skills"]
+LEARNING_RESOURCES = CONFIG["learning_resources"]
 
 # ========== FILE PROCESSING ==========
 def extract_text_from_file(uploaded_file) -> str:
@@ -263,11 +270,11 @@ def extract_text_from_file(uploaded_file) -> str:
         file_type = uploaded_file.type
         
         if file_type == "application/pdf":
-            with pdfplumber.open(BytesIO(uploaded_file.read())) as pdf:
+            with pdfplumber.open(io.BytesIO(uploaded_file.read())) as pdf:
                 return "\n".join(page.extract_text() for page in pdf.pages if page.extract_text())
         
         elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            doc = docx.Document(BytesIO(uploaded_file.read()))
+            doc = docx.Document(io.BytesIO(uploaded_file.read()))
             return "\n".join(para.text for para in doc.paragraphs if para.text)
         
         else:  # Plain text
@@ -302,34 +309,29 @@ def main():
         layout="wide"
     )
     
-    st.title("🧠 Ultimate Resume Analyzer PRO")
-    st.markdown("""
-    <style>
-    .big-font { font-size:18px !important; }
-    </style>
-    <p class="big-font">Upload your resume to identify skill gaps with <b>300+ skills</b> across <b>12 job roles</b> and get <b>100+ learning resources</b></p>
-    """, unsafe_allow_html=True)
+    st.title("🧠 Ultimate Resume Analyzer")
+    st.markdown("Upload your resume to identify skill gaps and learning resources")
     
     # Sidebar controls
     with st.sidebar:
-        st.header("⚙️ Settings")
+        st.header("Settings")
         selected_role = st.selectbox(
             "Select Target Role",
             options=sorted(ROLE_SKILLS.keys()),
             index=0
         )
         
-        st.header("📤 Upload Resume")
+        st.header("Upload Resume")
         uploaded_file = st.file_uploader(
-            "Choose file (PDF, DOCX, TXT)",
+            "Choose file",
             type=["pdf", "docx", "txt"],
             accept_multiple_files=False,
-            help="Supports all standard resume formats"
+            help="Supports PDF, Word, and Text files"
         )
     
     # Main analysis workflow
-    if uploaded_file and st.button("🔍 Analyze Resume", type="primary"):
-        with st.spinner("Analyzing your resume (this may take a few seconds)..."):
+    if uploaded_file and st.button("Analyze Resume"):
+        with st.spinner("Analyzing your resume..."):
             resume_text = extract_text_from_file(uploaded_file)
             
             if not resume_text.strip():
@@ -345,33 +347,26 @@ def main():
                 st.subheader("✅ Your Current Skills")
                 if found_skills:
                     for skill in found_skills:
-                        with st.expander(f"✔️ {skill}"):
-                            if skill in LEARNING_RESOURCES:
-                                st.markdown(f"📚 [Learn More]({LEARNING_RESOURCES[skill]})")
+                        st.success(f"✔️ {skill}")
                 else:
                     st.warning("No matching skills found in your resume")
             
             with col2:
-                st.subheader("⚠️ Missing Skills")
+                st.subheader("⚠️ Recommended Skills to Learn")
                 if missing_skills:
                     for skill in missing_skills:
-                        with st.expander(f"❌ {skill}"):
-                            if skill in LEARNING_RESOURCES:
-                                st.markdown(f"🔥 [Learn {skill}]({LEARNING_RESOURCES[skill]})")
-                            else:
-                                st.info("Search online to learn this skill")
+                        st.error(f"❌ {skill}")
+                        if skill in LEARNING_RESOURCES:
+                            st.markdown(
+                                f"📚 [Learn {skill}]({LEARNING_RESOURCES[skill]})",
+                                help=f"Resource for {skill}"
+                            )
                 else:
                     st.success("🎉 You have all required skills for this role!")
-                    
-            # Skill match percentage
-            if found_skills:
-                match_percent = int((len(found_skills) / (len(found_skills) + len(missing_skills))) * 100))
-                st.progress(match_percent)
-                st.subheader(f"🔢 Match Score: {match_percent}%")
     
     # Footer
     st.markdown("---")
-    st.caption("© 2023 Resume Analyzer PRO | Contains 300+ skills across 12 industries | 100+ learning resources")
+    st.caption("© 2023 Resume Analyzer | For educational purposes only")
 
 if __name__ == "__main__":
     main()
