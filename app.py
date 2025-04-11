@@ -1,5 +1,5 @@
 import streamlit as st
-import pdfplumber   # PyMuPDF
+import pdfplumber  # You can use either pdfplumber or PyMuPDF (fitz)
 
 # === Expanded Roles and Skills ===
 skill_map = {
@@ -49,10 +49,10 @@ learning_suggestions = {
 
 # === Extract Text from PDF ===
 def extract_text_from_pdf(uploaded_file):
-    with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+    with pdfplumber.open(uploaded_file) as pdf:
         text = ""
-        for page in doc:
-            text += page.get_text()
+        for page in pdf.pages:
+            text += page.extract_text()
     return text
 
 # === Skill Analysis ===
