@@ -365,7 +365,7 @@ def main():
                     
             # Skill match percentage
             if found_skills:
-                match_percent = int((len(found_skills) / (len(found_skills) + len(missing_skills)) * 100)
+                match_percent = int((len(found_skills) / (len(found_skills) + len(missing_skills))) * 100))
                 st.progress(match_percent)
                 st.subheader(f"🔢 Match Score: {match_percent}%")
     
