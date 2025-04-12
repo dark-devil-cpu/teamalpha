@@ -304,12 +304,20 @@ def analyze_skills(text: str, role: str) -> Tuple[List[str], List[str]]:
 # ========== STREAMLIT UI ==========
 def main():
     st.set_page_config(
-        page_title="Ultimate Resume Analyzer", 
+        page_title="Smart
+Resume
+Analyzer for
+Career
+Growth", 
         page_icon="🧠", 
         layout="wide"
     )
     
-    st.title("🧠 Ultimate Resume Analyzer")
+    st.title("🧠 Smart
+Resume
+Analyzer for
+Career
+Growth")
     st.markdown("Upload your resume to identify skill gaps and learning resources")
     
     # Sidebar controls
@@ -366,7 +374,7 @@ def main():
     
     # Footer
     st.markdown("---")
-    st.caption("© 2023 Resume Analyzer | For educational purposes only")
+    st.caption("© 2025 Resume Analyzer | For educational purposes only")
 
 if __name__ == "__main__":
     main()
